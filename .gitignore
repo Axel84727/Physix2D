@@ -4,3 +4,5 @@
 *.exe
 #archivos del sistema operativo
 .DS_Store
+#vscode
+/vscode/
