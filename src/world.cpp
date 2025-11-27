@@ -1,6 +1,7 @@
+#include "world.hpp"
+#include <cmath>
 #include "body.hpp"
 #include "vec2.hpp"
-#include "world.hpp"
 // world(std::vector<body> &b, const vec2 &gravedad, float delta_time);
 world::world() : bodies(), gravedad(), delta_time(0.0f) {}
 
@@ -51,4 +52,75 @@ void world::repoblar()
             grid[tempIndex].push_back(&body);
         }
     }
+}
+int world::get_grid_index(const vec2 &posicion) const
+{
+
+    int cx = static_cast<int>(posicion.x / grid_info.cell_size);
+    int cy = static_cast<int>(posicion.y / grid_info.cell_size);
+    if (cx < 0 || cx >= grid_info.num_cells_x ||
+        cy < 0 || cy >= grid_info.num_cells_y)
+    {
+
+        return -1;
+    }
+    int index = cy * grid_info.num_cells_x + cx;
+
+    return index;
+}
+std::vector<std::pair<body *, body *>> world::broad_phase()
+{
+    std::vector<std::pair<body *, body *>> pairs;
+
+    for (size_t cellIndex = 0; cellIndex < grid.size(); ++cellIndex)
+    {
+        auto &currentCell = grid[cellIndex];
+        int numCellsX = grid_info.num_cells_x;
+        int numCellsY = grid_info.num_cells_y;
+
+        int cy = cellIndex / numCellsX;
+        int cx = cellIndex % numCellsX;
+
+        int neighborOffset[3][2] = {
+            {1, 0},
+            {0, 0},
+            {1, 1}};
+
+        for (const auto offset : neighborOffset)
+        {
+            int dx = offset[0];
+            int dy = offset[1];
+
+            int neighborCx = cx + dx;
+            int neighborCy = cy + dy;
+
+            if (neighborCx >= numCellsX || neighborCy >= numCellsY)
+            {
+                continue;
+            }
+
+            int neighborIndex = neighborCy * numCellsX + neighborCx;
+            auto &neighborCell = grid[neighborIndex];
+
+            for (body *A : currentCell)
+            {
+                for (body *B : neighborCell)
+                {
+                    pairs.emplace_back(A, B);
+                }
+            }
+        }
+
+        for (size_t i = 0; i < currentCell.size(); ++i)
+        {
+            body *A = currentCell[i];
+            for (size_t j = i + 1; j < currentCell.size(); ++j)
+            {
+                body *B = currentCell[j];
+                pairs.emplace_back(A, B);
+            }
+        }
+    }
+
+    return pairs;
 }
