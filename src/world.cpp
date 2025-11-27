@@ -83,7 +83,7 @@ std::vector<std::pair<body *, body *>> world::broad_phase()
 
         int neighborOffset[3][2] = {
             {1, 0},
-            {0, 0},
+            {0, 1},
             {1, 1}};
 
         for (const auto offset : neighborOffset)
