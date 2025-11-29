@@ -9,6 +9,10 @@ void print_vec2(const vec2 &v)
     std::cout << "(" << v.x << ", " << v.y << ")";
 }
 
+// ------------------ Tests de colisiones (M4) ------------------
+void test_elastic_collision();
+void test_static_collision();
+
 int main()
 {
     std::cout << "--- PRUEBA DE CONSTRUCTORES ---" << std::endl;
@@ -136,5 +140,103 @@ int main()
     std::cout << "\n--- RESULTADO FINAL ---\n";
     std::cout << "Cuerpo 0: Posicion Final Y: " << world1.bodies[0].posicion.y << std::endl;
     // Si la gravedad es -9.81, el valor de 'Pos Y' y 'Vel Y' deben ser menores que el inicial.
+    // Ejecutar tests de colision M4
+    test_elastic_collision();
+    test_static_collision();
+
     return 0;
+}
+
+// ---------------------------------------------------------------
+// Test 2: Colisión frontal elástica
+// ---------------------------------------------------------------
+void test_elastic_collision()
+{
+    std::cout << "========================================================\n";
+    std::cout << "PRUEBA 2: COLISION FRONTAL ELASTICA (M4)\n";
+    std::cout << "OBJETIVO: Verificar separacion y cambio de velocidad (rebote).\n";
+    std::cout << "========================================================\n";
+
+    const float dt = 1.0f / 60.0f;
+    const float radio = 1.0f;
+    const float masa = 1.0f;
+    const float inv_masa = 1.0f;
+    const float vel_inicial = 5.0f;
+    // Distancia inicial reducida para colisionar en el primer tick
+    const float distancia_inicial = 2.0f;
+
+    body A(vec2(-distancia_inicial / 2.0f, 0.0f), vec2(vel_inicial, 0.0f), vec2(0.0f, 0.0f), masa, inv_masa, radio);
+    body B(vec2(distancia_inicial / 2.0f, 0.0f), vec2(-vel_inicial, 0.0f), vec2(0.0f, 0.0f), masa, inv_masa, radio);
+
+    std::vector<body> bodies = {A, B};
+    world collision_world(bodies, vec2(0.0f, 0.0f), dt);
+
+    std::cout << "ESTADO INICIAL:\n";
+    std::cout << "Body A | Pos X: " << collision_world.bodies[0].posicion.x << ", Vel X: " << collision_world.bodies[0].velocidad.x << std::endl;
+    std::cout << "Body B | Pos X: " << collision_world.bodies[1].posicion.x << ", Vel X: " << collision_world.bodies[1].velocidad.x << std::endl;
+
+    std::cout << "\n--- EJECUTANDO TICK 1 (COLISION Y RESOLUCION) ---\n";
+    collision_world.update();
+
+    float expected_vel_after = -(0.8f * vel_inicial);
+
+    std::cout << "ESTADO FINAL:\n";
+    std::cout << "Body A | Pos X: " << collision_world.bodies[0].posicion.x << ", Vel X: " << collision_world.bodies[0].velocidad.x << std::endl;
+    std::cout << "Body B | Pos X: " << collision_world.bodies[1].posicion.x << ", Vel X: " << collision_world.bodies[1].velocidad.x << std::endl;
+
+    if (std::abs(collision_world.bodies[0].velocidad.x - expected_vel_after) < 0.2f)
+    {
+        std::cout << "TEST RESULTADO: COLISIÓN FRONTAL - EXITOSA (Rebote OK).\n";
+    }
+    else
+    {
+        std::cout << "TEST RESULTADO: COLISIÓN FRONTAL - FALLIDA.\n";
+    }
+    std::cout << "\n";
+}
+
+// ---------------------------------------------------------------
+// Test 3: Colisión con cuerpo estático (masa infinita)
+// ---------------------------------------------------------------
+void test_static_collision()
+{
+    std::cout << "========================================================\n";
+    std::cout << "PRUEBA 3: COLISION CON CUERPO ESTATICO (M4)\n";
+    std::cout << "OBJETIVO: Verificar que el estático no se mueve y el dinámico rebota.\n";
+    std::cout << "========================================================\n";
+
+    const float dt = 1.0f / 60.0f;
+    const float radio = 1.0f;
+    const float masa_movil = 1.0f;
+    const float vel_inicial = 5.0f;
+
+    body A(vec2(-2.0f, 0.0f), vec2(vel_inicial, 0.0f), vec2(0.0f, 0.0f), masa_movil, 1.0f / masa_movil, radio);
+    // Pared más cercana para colisionar en el primer tick
+    body B(vec2(0.0f, 0.0f), vec2(0.0f, 0.0f), vec2(0.0f, 0.0f), 0.0f, 0.0f, radio);
+
+    std::vector<body> bodies = {A, B};
+    world collision_world(bodies, vec2(0.0f, 0.0f), dt);
+
+    std::cout << "ESTADO INICIAL:\n";
+    std::cout << "Body A (Movil) | Pos X: " << collision_world.bodies[0].posicion.x << ", Vel X: " << collision_world.bodies[0].velocidad.x << std::endl;
+    std::cout << "Body B (Estatico) | Pos X: " << collision_world.bodies[1].posicion.x << ", Vel X: " << collision_world.bodies[1].velocidad.x << std::endl;
+
+    std::cout << "\n--- EJECUTANDO TICK 1 (COLISION CON PARED) ---\n";
+    collision_world.update();
+
+    float expected_vel_A = -(0.8f * vel_inicial);
+
+    std::cout << "ESTADO FINAL:\n";
+    std::cout << "Body A (Movil) | Pos X: " << collision_world.bodies[0].posicion.x << ", Vel X: " << collision_world.bodies[0].velocidad.x << std::endl;
+    std::cout << "Body B (Estatico) | Pos X: " << collision_world.bodies[1].posicion.x << ", Vel X: " << collision_world.bodies[1].velocidad.x << std::endl;
+
+    if (collision_world.bodies[1].posicion.x == 0.0f && collision_world.bodies[1].velocidad.x == 0.0f && std::abs(collision_world.bodies[0].velocidad.x - expected_vel_A) < 0.2f)
+    {
+        std::cout << "TEST RESULTADO: ESTATICO - EXITOSA (Estático no se movió; Movil rebotó OK).\n";
+    }
+    else
+    {
+        std::cout << "TEST RESULTADO: ESTATICO - FALLIDA.\n";
+    }
+    std::cout << "\n";
 }

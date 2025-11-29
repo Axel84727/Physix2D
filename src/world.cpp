@@ -128,13 +128,12 @@ void world::repoblar()
 }
 int world::get_grid_index(const vec2 &posicion) const
 {
+    int cx = static_cast<int>((posicion.x - grid_info.min_x) / grid_info.cell_size);
+    int cy = static_cast<int>((posicion.y - grid_info.min_y) / grid_info.cell_size);
 
-    int cx = static_cast<int>(posicion.x / grid_info.cell_size);
-    int cy = static_cast<int>(posicion.y / grid_info.cell_size);
     if (cx < 0 || cx >= grid_info.num_cells_x ||
         cy < 0 || cy >= grid_info.num_cells_y)
     {
-
         return -1;
     }
     int index = cy * grid_info.num_cells_x + cx;
