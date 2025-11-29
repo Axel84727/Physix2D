@@ -39,4 +39,5 @@ struct world
     std::vector<std::pair<body *, body *>> broad_phase();
     void step_physics();
     void resolve_collision(body *A, body *B);
+    void integrate();
 };

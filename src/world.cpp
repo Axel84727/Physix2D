@@ -4,7 +4,21 @@
 #include "vec2.hpp"
 // world(std::vector<body> &b, const vec2 &gravedad, float delta_time);
 world::world() : bodies(), gravedad(), delta_time(0.0f) {}
-void resolve_collision(body *A, body *B)
+void world::integrate()
+{
+    for (body &b : bodies)
+    {
+        if (b.inv_mass == 0.0f)
+        {
+            continue;
+        }
+        vec2 aceleracion_total = b.aceleracion + gravedad;
+        b.velocidad = b.velocidad + (aceleracion_total * delta_time);
+        b.posicion = b.posicion + (b.velocidad * delta_time);
+        b.aceleracion = vec2(0.0f, 0.0f);
+    };
+}
+void world::resolve_collision(body *A, body *B)
 {
     vec2 distancia = A->posicion - B->posicion;
 
@@ -65,17 +79,18 @@ void world::step_physics()
 }
 world::world(const std::vector<body> &b_param, const vec2 &gravedad_param, float delta_time_param) : bodies(b_param), gravedad(gravedad_param), delta_time(delta_time_param)
 {
-
     float width = grid_info.max_x - grid_info.min_x;
     float height = grid_info.max_y - grid_info.min_y;
 
     int numCellsX = static_cast<int>(std::ceil(width / grid_info.cell_size));
     int numCellsY = static_cast<int>(std::ceil(height / grid_info.cell_size));
+    grid_info.num_cells_x = numCellsX;
+    grid_info.num_cells_y = numCellsY;
 
     int totalCells = numCellsX * numCellsY;
     grid.resize(totalCells);
 }
-bool check_collision(body *A, body *B)
+bool world::check_collision(body *A, body *B)
 {
     vec2 distancia = A->posicion - B->posicion;
     float distancia_al_cuadrado = (distancia.x * distancia.x + distancia.y * distancia.y);
@@ -88,20 +103,10 @@ bool check_collision(body *A, body *B)
 }
 void world::update()
 {
-    for (body &b : bodies)
-    {
-        // 1. Cálculo de Aceleración Total
-        vec2 aceleracion_total = b.aceleracion + gravedad;
-
-        // 2. Actualización de Velocidad
-        b.velocidad = b.velocidad + (aceleracion_total * delta_time);
-
-        // 3. Actualización de Posición
-        b.posicion = b.posicion + (b.velocidad * delta_time);
-
-        // 4. Limpieza
-        b.aceleracion = vec2(0.0f, 0.0f);
-    }
+    integrate();
+    limpieza();
+    repoblar();
+    step_physics();
 }
 void world::limpieza()
 {
