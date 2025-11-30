@@ -10,13 +10,13 @@ vec2::vec2(float val_x, float val_y) : x(val_x), y(val_y)
 
 // src/vec2.cpp
 
-// Suma de Vectores (vec2 + vec2)
+// Vector addition (vec2 + vec2)
 vec2 operator+(const vec2 &left, const vec2 &right)
 {
     return vec2(left.x + right.x, left.y + right.y);
 }
 
-// Multiplicación (Vector * Escalar)
+// Multiplication (vector * scalar)
 vec2 operator*(const vec2 &left, float right)
 {
     return vec2(left.x * right, left.y * right);
@@ -27,7 +27,7 @@ vec2 operator-(const vec2 &left, const vec2 &right)
     return vec2(left.x - right.x, left.y - right.y);
 }
 
-// Multiplicación (Escalar * Vector)
+// Multiplication (scalar * vector)
 vec2 operator*(float left, const vec2 &right)
 {
     return vec2(left * right.x, left * right.y);
