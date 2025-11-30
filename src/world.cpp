@@ -32,7 +32,7 @@ void world::integrate()
             break;
 
         case VERLET_POSITION:
-
+        {
             vec2 posicion_actual = b.posicion;
 
             vec2 delta_time2 = aceleracion_total * (delta_time * delta_time);
@@ -43,6 +43,7 @@ void world::integrate()
 
             b.velocidad = (b.posicion - b.posicion_previa) * (1.0f / delta_time);
             break;
+        }
         default:
             break;
         }
