@@ -3,9 +3,9 @@
 #include "physics/body.hpp"
 #include "math/vec2.hpp"
 // world(std::vector<body> &b, const vec2 &gravedad, float delta_time);
-world::world() : bodies(), gravedad(), delta_time(0.0f) {}
+world::world() : bodies(), gravity_vector(), delta_time(0.0f) {}
 
-world::world(const std::vector<body> &b_param, const vec2 &gravedad_param, float delta_time_param) : bodies(b_param), gravedad(gravedad_param), delta_time(delta_time_param)
+world::world(const std::vector<body> &b_param, const vec2 &gravity_vector, float delta_time_param) : bodies(b_param), gravity_vector(gravity_vector), delta_time(delta_time_param)
 {
     float width = grid_info.max_x - grid_info.min_x;
     float height = grid_info.max_y - grid_info.min_y;
