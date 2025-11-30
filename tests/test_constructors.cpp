@@ -1,33 +1,33 @@
-// tests/test_constructors.cpp
-
 #include "utilities/test_helpers.hpp"
+#include <iostream>
 
 void test_vec2_constructor()
 {
-    std::cout << "\n--- TEST: Constructores Vec2 ---\n";
+    std::cout << "\n--- TEST: Vec2 Constructors ---\n";
     vec2 v;
     print_vec2(v);
-    std::cout << " <-- vec2 por defecto\n";
+    std::cout << " <-- default vec2\n";
     vec2 v2(1.0f, 2.0f);
     print_vec2(v2);
-    std::cout << " <-- vec2 parametrizado\n";
+    std::cout << " <-- parameterized vec2\n";
 }
 
 void test_body_constructor()
 {
-    std::cout << "\n--- TEST: Constructor Body ---\n";
+    std::cout << "\n--- TEST: Body Constructor ---\n";
+    // Using create_body(posX, posY, velX, velY, mass, radius)
     body b = create_body(0, 0, 1, 1, 1, 0.5f);
-    print_vec2(b.posicion);
-    std::cout << " | masa: " << b.masa << " | radio: " << b.radio << "\n";
+    print_vec2(b.position); // Accessing the new 'position' member
+    std::cout << " | mass: " << b.mass << " | radius: " << b.radius << "\n";
 }
 
 void test_world_constructor()
 {
-    std::cout << "\n--- TEST: Constructor World ---\n";
-    std::vector<body> cuerpos;
-    cuerpos.push_back(create_body(0, 0, 0, 0, 1, 1));
-    world w(cuerpos, vec2(0, -9.8f), 0.016f);
-    std::cout << "World bodies: " << w.bodies.size() << "\n";
+    std::cout << "\n--- TEST: World Constructor ---\n";
+    std::vector<body> bodies;
+    bodies.push_back(create_body(0, 0, 0, 0, 1, 1));
+    world w(bodies, vec2(0, -9.8f), 0.016f);
+    std::cout << "World bodies size: " << w.bodies.size() << "\n";
 }
 
 void test_world_constructors()

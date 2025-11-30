@@ -1,13 +1,12 @@
-// tests/test_collisions.cpp
-
 #include "utilities/test_helpers.hpp"
 #include "sim/collisionSystem.hpp"
 #include <iostream>
 
 void test_collision_elastic()
 {
-    std::cout << "\n--- TEST: Colisión Elástica (1D) ---\n";
+    std::cout << "\n--- TEST: Elastic Collision (1D) ---\n";
 
+    // A and B moving towards each other, mass=1, radius=1, restitution=1.0f
     body A = create_body(-1, 0, 1, 0, 1, 1, 1.0f);
     body B = create_body(1, 0, -1, 0, 1, 1, 1.0f);
 
@@ -19,13 +18,15 @@ void test_collision_elastic()
 
     cs.update(w, 0.016f);
 
-    std::cout << "Velocidad A X: " << w.bodies[0].velocidad.x << ", Velocidad B X: " << w.bodies[1].velocidad.x << "\n";
+    // Check if velocities are swapped (expected for elastic collision)
+    std::cout << "Velocity A X: " << w.bodies[0].velocity.x << ", Velocity B X: " << w.bodies[1].velocity.x << "\n";
 }
 
 void test_collision_static()
 {
-    std::cout << "\n--- TEST: Colisión con Cuerpo Estático (Pared) ---\n";
+    std::cout << "\n--- TEST: Collision with Static Body (Wall) ---\n";
 
+    // A: moving (mass=1), B: static (inv_mass=0)
     body A = create_body(-1, 0, 2, 0, 1, 1, 0.8f);
     body B = create_body(0, 0, 0, 0, 0, 1, 0.8f);
 
@@ -35,5 +36,6 @@ void test_collision_static()
     collisionSystem cs;
     cs.update(w, 0.016f);
 
-    std::cout << "Velocidad A X: " << w.bodies[0].velocidad.x << ", Velocidad B X: " << w.bodies[1].velocidad.x << "\n";
+    // Check if A's velocity is reversed and reduced by restitution
+    std::cout << "Velocity A X: " << w.bodies[0].velocity.x << ", Velocity B X: " << w.bodies[1].velocity.x << "\n";
 }
