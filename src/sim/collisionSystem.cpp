@@ -37,7 +37,7 @@ void collisionSystem::populate_spatial_grid(world &simulation_world)
 {
     for (auto &current_body : simulation_world.bodies)
     {
-        int grid_index = simulation_world.get_grid_index(current_body.posicion);
+        int grid_index = simulation_world.get_grid_index(current_body.position);
         if (grid_index >= 0)
         {
             simulation_world.grid[grid_index].push_back(&current_body);
@@ -117,10 +117,10 @@ std::vector<std::pair<body *, body *>> collisionSystem::broad_phase_generate_pai
 
 bool collisionSystem::check_for_overlap(body *body_A, body *body_B, world &simulation_world)
 {
-    vec2 displacement_vector = body_A->posicion - body_B->posicion;
+    vec2 displacement_vector = body_A->position - body_B->position;
     float distance_squared = dot(displacement_vector, displacement_vector); // Avoid sqrt()
 
-    float sum_of_radii = body_A->radio + body_B->radio;
+    float sum_of_radii = body_A->radius + body_B->radius;
     float sum_of_radii_squared = sum_of_radii * sum_of_radii;
 
     return distance_squared <= sum_of_radii_squared;
@@ -156,14 +156,14 @@ void collisionSystem::narrow_phase_check_and_resolve(world &simulation_world)
 void collisionSystem::resolve_contact_with_impulse(body *body_A, body *body_B, world &simulation_world)
 {
     // 1. CONTACT DATA CALCULATION (Manifold)
-    vec2 displacement_vector = body_B->posicion - body_A->posicion;
+    vec2 displacement_vector = body_B->position - body_A->position;
     float distance_squared = dot(displacement_vector, displacement_vector);
 
     if (distance_squared <= 1e-6f)
         return;
 
     float distance = std::sqrt(distance_squared);
-    float sum_of_radii = body_A->radio + body_B->radio;
+    float sum_of_radii = body_A->radius + body_B->radius;
     float penetration_depth = sum_of_radii - distance;
 
     if (penetration_depth <= 0.0f)
@@ -186,19 +186,19 @@ void collisionSystem::resolve_contact_with_impulse(body *body_A, body *body_B, w
     vec2 position_correction_vector = collision_normal * correction_magnitude;
 
     // Apply correction proportional to inverse mass
-    body_A->posicion = body_A->posicion - position_correction_vector * inverse_mass_A;
-    body_B->posicion = body_B->posicion + position_correction_vector * inverse_mass_B;
+    body_A->position = body_A->position - position_correction_vector * inverse_mass_A;
+    body_B->position = body_B->position + position_correction_vector * inverse_mass_B;
 
     // 3. IMPULSE RESOLUTION (Change of Velocity)
 
-    vec2 relative_velocity = body_B->velocidad - body_A->velocidad;
+    vec2 relative_velocity = body_B->velocity - body_A->velocity;
     float velocity_along_normal = dot(relative_velocity, collision_normal);
 
     // If bodies are already separating, don't apply impulse
     if (velocity_along_normal > 0.0f)
         return;
 
-    float effective_restitution = (body_A->restitucion + body_B->restitucion) * 0.5f;
+    float effective_restitution = (body_A->restitution + body_B->restitution) * 0.5f;
 
     // Compute scalar impulse (J)
     float impulse_scalar = -(1.0f + effective_restitution) * velocity_along_normal;
@@ -207,18 +207,18 @@ void collisionSystem::resolve_contact_with_impulse(body *body_A, body *body_B, w
     vec2 collision_impulse_vector = collision_normal * impulse_scalar;
 
     // Apply impulse
-    body_A->velocidad = body_A->velocidad - collision_impulse_vector * inverse_mass_A;
-    body_B->velocidad = body_B->velocidad + collision_impulse_vector * inverse_mass_B;
+    body_A->velocity = body_A->velocity - collision_impulse_vector * inverse_mass_A;
+    body_B->velocity = body_B->velocity + collision_impulse_vector * inverse_mass_B;
 
     // 4. LOW-VELOCITY ELIMINATION (Sleeping)
-    if (std::fabs(body_A->velocidad.x) < VELOCITY_EPSILON)
-        body_A->velocidad.x = 0.0f;
-    if (std::fabs(body_A->velocidad.y) < VELOCITY_EPSILON)
-        body_A->velocidad.y = 0.0f;
-    if (std::fabs(body_B->velocidad.x) < VELOCITY_EPSILON)
-        body_B->velocidad.x = 0.0f;
-    if (std::fabs(body_B->velocidad.y) < VELOCITY_EPSILON)
-        body_B->velocidad.y = 0.0f;
+    if (std::fabs(body_A->velocity.x) < VELOCITY_EPSILON)
+        body_A->velocity.x = 0.0f;
+    if (std::fabs(body_A->velocity.y) < VELOCITY_EPSILON)
+        body_A->velocity.y = 0.0f;
+    if (std::fabs(body_B->velocity.x) < VELOCITY_EPSILON)
+        body_B->velocity.x = 0.0f;
+    if (std::fabs(body_B->velocity.y) < VELOCITY_EPSILON)
+        body_B->velocity.y = 0.0f;
 }
 
 // ====================================================================
@@ -234,22 +234,22 @@ void collisionSystem::solve_boundary_contacts(world &simulation_world)
 
         const float ground_y_limit = 0.0f;
 
-        if (current_body.posicion.y - current_body.radio < ground_y_limit)
+        if (current_body.position.y - current_body.radius < ground_y_limit)
         {
             // 1. Position correction
-            current_body.posicion.y = ground_y_limit + current_body.radio;
+            current_body.position.y = ground_y_limit + current_body.radius;
 
             // 2. Velocity resolution (bounce)
-            if (current_body.velocidad.y < 0.0f)
+            if (current_body.velocity.y < 0.0f)
             {
-                float applied_restitution = current_body.restitucion;
-                current_body.velocidad.y = -current_body.velocidad.y * applied_restitution;
+                float applied_restitution = current_body.restitution;
+                current_body.velocity.y = -current_body.velocity.y * applied_restitution;
             }
 
             // 3. Low-velocity elimination
-            if (std::fabs(current_body.velocidad.y) < VELOCITY_EPSILON)
+            if (std::fabs(current_body.velocity.y) < VELOCITY_EPSILON)
             {
-                current_body.velocidad.y = 0.0f;
+                current_body.velocity.y = 0.0f;
             }
         }
     }
