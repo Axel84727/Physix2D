@@ -14,7 +14,7 @@ set(SOURCE_FILES
 )
 
 add_executable(TEST1 ${SOURCE_FILES})
-
+add_subdirectory(tests)
 target_include_directories(TEST1 PRIVATE 
     ${CMAKE_SOURCE_DIR}/include
 )
