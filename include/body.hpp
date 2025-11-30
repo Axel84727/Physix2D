@@ -4,6 +4,7 @@
 struct body
 {
     vec2 posicion;
+    vec2 posicion_previa;
     vec2 velocidad;
     vec2 aceleracion;
     float masa;

@@ -5,6 +5,6 @@ body::body(const vec2 &posicion,
            const vec2 &aceleracion,
            float masa,
            float inv_mass,
-           float radio) : posicion(posicion), velocidad(velocidad), aceleracion(aceleracion), masa(masa), inv_mass(inv_mass), radio(radio) {}
+           float radio) : posicion(posicion), posicion_previa(posicion), velocidad(velocidad), aceleracion(aceleracion), masa(masa), inv_mass(inv_mass), radio(radio) {}
 
-body::body() : posicion(), velocidad(), aceleracion(), masa(0.0f), inv_mass(0.0f), radio(0.0f) {}
+body::body() : posicion(), posicion_previa(), velocidad(), aceleracion(), masa(0.0f), inv_mass(0.0f), radio(0.0f) {}

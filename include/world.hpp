@@ -2,7 +2,13 @@
 #include <vector>
 #include "body.hpp"
 #include "vec2.hpp"
-// TODO: repoblar las matrices luego de las limpiezas
+
+enum IntegratorType
+{
+    EULER_EXPLICIT,
+    EULER_SEMI_IMPLICIT,
+    VERLET_POSITION
+};
 struct GridInfo
 {
     float min_x = -100.0f;
@@ -17,7 +23,7 @@ struct GridInfo
 };
 struct world
 {
-
+    IntegratorType integrador_actual = EULER_SEMI_IMPLICIT;
     GridInfo grid_info;
     std::vector<body> bodies;
     vec2 gravedad;

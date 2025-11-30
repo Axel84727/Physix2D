@@ -8,14 +8,44 @@ void world::integrate()
 {
     for (body &b : bodies)
     {
-        if (b.inv_mass == 0.0f)
+        if (b.inv_mass <= 0)
         {
-            continue;
+            return;
         }
+
         vec2 aceleracion_total = b.aceleracion + gravedad;
-        b.velocidad = b.velocidad + (aceleracion_total * delta_time);
-        b.posicion = b.posicion + (b.velocidad * delta_time);
-        b.aceleracion = vec2(0.0f, 0.0f);
+        switch (integrador_actual)
+        /*EULER_EXPLICIT,
+    EULER_SEMI_IMPLICIT,
+    VERLET_POSITION*/
+        {
+        case EULER_EXPLICIT:
+
+            b.posicion = b.posicion + (b.velocidad * delta_time);
+            b.velocidad = b.velocidad + (aceleracion_total * delta_time);
+            break;
+
+        case EULER_SEMI_IMPLICIT:
+            b.velocidad = b.velocidad + (aceleracion_total * delta_time);
+
+            b.posicion = b.posicion + (b.velocidad * delta_time);
+            break;
+
+        case VERLET_POSITION:
+
+            vec2 posicion_actual = b.posicion;
+
+            vec2 delta_time2 = aceleracion_total * (delta_time * delta_time);
+            vec2 siguiente_posicion = (b.posicion * 2.0f) - b.posicion_previa + delta_time2;
+
+            b.posicion_previa = posicion_actual;
+            b.posicion = siguiente_posicion;
+
+            b.velocidad = (b.posicion - b.posicion_previa) * (1.0f / delta_time);
+            break;
+        default:
+            break;
+        }
     };
 }
 void world::resolve_collision(body *A, body *B)
