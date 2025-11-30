@@ -5,7 +5,7 @@ class movementSystem : public ISystem
 {
 private:
     /* data */
-    void integrate(world &world);
+    void verlet_integration(world &world);
 
 public:
     void update(world &, float dt) override;

@@ -1,53 +1,51 @@
 #include "sim/movementSystem.hpp"
 #include "physics/body.hpp"
 #include "physics/world.hpp"
-// Provide constructor/destructor for movementSystem so linker can resolve symbols
 movementSystem::movementSystem() {}
 movementSystem::~movementSystem() {}
-void movementSystem::integrate(world &world)
+void movementSystem::verlet_integration(world &simulation_world)
 {
-    for (body &b : world.bodies)
+    // Pre-calculate time terms for efficiency and clarity
+    const float delta_time = simulation_world.delta_time;
+    const float delta_time_squared = delta_time * delta_time;
+    const float inverse_delta_time = 1.0f / delta_time;
+
+    // Iterate over all bodies in the world
+    for (body &current_body : simulation_world.bodies)
     {
-        if (b.inv_mass <= 0)
+        // 1. Check Static Bodies (inv_mass = 0)
+        if (current_body.inv_mass <= 0.0f)
         {
             continue;
         }
 
-        vec2 aceleracion_total = b.aceleracion + world.gravedad;
-        switch (world.integrador_actual)
-        {
-        case EULER_EXPLICIT:
+        // 2. Calculation of Total Acceleration
+        // Note: Assume 'aceleracion' contains non-gravitational forces.
+        vec2 total_acceleration = current_body.aceleracion + simulation_world.gravedad;
 
-            b.posicion = b.posicion + (b.velocidad * world.delta_time);
-            b.velocidad = b.velocidad + (aceleracion_total * world.delta_time);
-            break;
+        // Save the current position before modifying it (will become the previous position)
+        vec2 current_position = current_body.posicion;
 
-        case EULER_SEMI_IMPLICIT:
-            b.velocidad = b.velocidad + (aceleracion_total * world.delta_time);
+        // 3. Calculation of the Next Position (Verlet equation)
 
-            b.posicion = b.posicion + (b.velocidad * world.delta_time);
-            break;
+        // Acceleration term: a * delta_time^2
+        vec2 acceleration_term = total_acceleration * delta_time_squared;
 
-        case VERLET_POSITION:
-        {
-            vec2 posicion_actual = b.posicion;
+        // Core Verlet equation:
+        // next_pos = 2 * current_pos - previous_pos + a * delta_time^2
+        vec2 next_position = (current_body.posicion * 2.0f) - current_body.posicion_previa + acceleration_term;
 
-            vec2 delta_time2 = aceleracion_total * (world.delta_time * world.delta_time);
-            vec2 siguiente_posicion = (b.posicion * 2.0f) - b.posicion_previa + delta_time2;
+        // 4. Update Position for the Next Step
+        current_body.posicion_previa = current_position; // The old position is the current position
+        current_body.posicion = next_position;
 
-            b.posicion_previa = posicion_actual;
-            b.posicion = siguiente_posicion;
-            b.velocidad = (b.posicion - b.posicion_previa) * (1.0f / world.delta_time);
-            break;
-        }
-        default:
-            break;
-        }
-    };
+        // 5. Explicit Velocity Calculation (Needed for collision detection)
+        // velocity = (current_pos - previous_pos) / delta_time
+        current_body.velocidad = (current_body.posicion - current_body.posicion_previa) * inverse_delta_time;
+    }
 }
 
-void movementSystem::update(world &w, float dt)
+void movementSystem::update(world &simulation_world, float delta_time)
 {
-    (void)dt;
-    integrate(w);
+    verlet_integration(simulation_world);
 }
