@@ -28,6 +28,5 @@ struct world
 
     world(const std::vector<body> &b, const vec2 &gravity_vector, float delta_time);
 
-    // Limpieza de nombres
     int get_grid_index(const vec2 &position) const;
 };
