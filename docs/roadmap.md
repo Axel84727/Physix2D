@@ -1,4 +1,4 @@
-# CudaPlayground - Development Roadmap
+# (Orininal plan) Physix2D/CudaPlayground - Development Roadmap
 
 A structured learning path for building a 2D physics engine from scratch, progressing from basic C++ to GPU-accelerated CUDA implementation.
 
