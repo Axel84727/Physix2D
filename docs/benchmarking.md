@@ -29,14 +29,15 @@ Contenido rápido
 
 3. Compilar (sin CUDA)
 
-Desde la raíz del repositorio, ejecutar:
+Desde la raíz del repositorio, ejecutar (ruta relativa, funciona en cualquier sistema):
 
 ```bash
-# Configurar (sin CUDA) y habilitar el benchmark
+# 1) Configurar y habilitar el target "benchmark" (no activa CUDA)
 cmake -S . -B build -DENABLE_CUDA=OFF -DBUILD_BENCHMARK=ON
 
-# Compilar (usa todos los núcleos disponibles)
-cmake --build build --config Release -j$(sysctl -n hw.ncpu)
+# 2) Compilar todo (usa todos los núcleos disponibles)
+# macOS: use sysctl to get cores; Linux: use nproc
+cmake --build build --config Release -j$(if command -v sysctl >/dev/null 2>&1; then sysctl -n hw.ncpu; else nproc; fi)
 ```
 
 Notas:
@@ -49,9 +50,10 @@ cmake --build build --config Release --target benchmark -j$(sysctl -n hw.ncpu)
 
 4. Ejecutar el benchmark (headless)
 
-El ejecutable `benchmark` se genera en `build/benchmark` (o `build/bin/benchmark`, dependiendo de la plataforma). Ejecuta:
+El ejecutable `benchmark` se genera en `build/benchmark` (o `build/bin/benchmark`, dependiendo de la plataforma). Ejecuta desde la raíz del repo:
 
 ```bash
+# Ejecuta el target benchmark (ruta relativa)
 ./build/benchmark --n 1000 --frames 1000 --warmup 100
 ```
 
@@ -103,11 +105,11 @@ Esto produce `benchmarks/summary.json` con un objeto por cada CSV encontrado.
 9. Ejemplo rápido (flujo completo)
 
 ```bash
-# 1) Configurar y compilar
+# 1) Configurar y compilar (ejemplo)
 cmake -S . -B build -DENABLE_CUDA=OFF -DBUILD_BENCHMARK=ON
-cmake --build build --config Release --target benchmark -j$(sysctl -n hw.ncpu)
+cmake --build build --config Release --target benchmark -j$(if command -v sysctl >/dev/null 2>&1; then sysctl -n hw.ncpu; else nproc; fi)
 
-# 2) Ejecutar benchmark
+# 2) Ejecutar el benchmark
 ./build/benchmark --n 1000 --frames 1000 --warmup 100
 
 # 3) Analizar

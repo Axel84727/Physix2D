@@ -38,15 +38,32 @@ sudo apt install build-essential cmake libraylib-dev
 
 General build steps (from project root):
 
+Note: run the following commands from the repository root (where this README.md lives). Replace the path to the repo if it's different on your machine.
+
+```bash
+# Configure an out-of-source build and generate build files
+cmake -S . -B build
+
+# Build using the generated build system (parallel)
+cmake --build build -j
+
+# Run the graphical executable
+./build/CudaPlayground
+```
+
+If you prefer the older style (entering the build dir) you can also do:
+
 ```bash
 mkdir -p build
 cd build
 cmake ..
-make -j$(nproc)
-./CudaPlayground
+cmake --build . -j
+../build/CudaPlayground || ./CudaPlayground
 ```
 
 If CMake can't find Raylib, set `raylib_DIR` or `CMAKE_PREFIX_PATH` to the location where raylib was installed.
+
+If your checkout lives in a different path than the examples above, just `cd` into the project root first and run the same commands — the build is relative to the repo root, so it works on other machines without path edits.
 
 Controls (keys and interactions)
 
