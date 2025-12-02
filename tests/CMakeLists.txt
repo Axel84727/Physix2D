@@ -8,7 +8,6 @@ include_directories("../include")
 
 # Source files for the main simulation engine
 set(CORE_SRC_FILES
-    ../src/math/vec2.cpp
     ../src/physics/body.cpp
     ../src/physics/world.cpp
     ../src/sim/collisionSystem.cpp
@@ -21,6 +20,10 @@ file(GLOB TEST_SRC_FILES *.cpp)
 
 # Create the test executable
 add_executable(run_tests ${CORE_SRC_FILES} ${TEST_SRC_FILES})
+
+# Register with CTest
+enable_testing()
+add_test(NAME run_tests COMMAND run_tests)
 
 # Link against the necessary libraries if any (e.g., standard math library for sqrt/sin)
 # target_link_libraries(run_tests m) # Uncomment if linking to math library is needed

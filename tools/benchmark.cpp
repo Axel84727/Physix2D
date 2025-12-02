@@ -66,7 +66,12 @@ int main(int argc, char **argv)
         bodies.push_back(body(vec2(px, py), vec2(0, 0), vec2(0, 0), 1.0f, 1.0f, 1.0f));
     }
 
-    world sim_world(bodies, vec2(0.0f, -9.8f), 1.0f / 60.0f);
+    world sim_world;
+    sim_world.gravity_x = 0.0f;
+    sim_world.gravity_y = -9.8f;
+    sim_world.delta_time = 1.0f / 60.0f;
+    for (auto &b : bodies)
+        sim_world.add_body(b);
 
     // Prepare systems
     systemManager manager;
@@ -90,8 +95,16 @@ int main(int argc, char **argv)
         auto t1 = std::chrono::high_resolution_clock::now();
         auto total_us = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
 
-        // For now, we don't have global accumulators; output zeros for sub-phases.
-        out << f << "," << total_us << ",0,0,0\n";
+        // Write per-phase accumulators recorded by systems (collisionSystem)
+        unsigned long long broad = sim_world.broad_phase_us;
+        unsigned long long narrow = sim_world.narrow_phase_us;
+        unsigned long long resolve = sim_world.resolve_phase_us;
+        out << f << "," << total_us << "," << broad << "," << narrow << "," << resolve << "\n";
+
+        // reset per-frame accumulators
+        sim_world.broad_phase_us = 0;
+        sim_world.narrow_phase_us = 0;
+        sim_world.resolve_phase_us = 0;
     }
 
     out.close();

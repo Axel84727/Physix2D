@@ -10,55 +10,99 @@ void movementSystem::verlet_integration(world &simulation_world)
     const float delta_time_squared = delta_time * delta_time;
     const float inverse_delta_time = 1.0f / delta_time;
 
-    // Iterate over all bodies in the world
-    for (body &current_body : simulation_world.bodies)
+    // Iterate over all bodies using SoA arrays in world
+    size_t n = simulation_world.position_x.size();
+    for (size_t i = 0; i < n; ++i)
     {
-        // 1. Check Static Bodies (inv_mass = 0)
-        if (current_body.inv_mass <= 0.0f)
-        {
-            continue;
-        }
+        float inv_mass = simulation_world.inv_mass[i];
+        if (inv_mass <= 0.0f)
+            continue; // static
 
-        // 2. Calculation of Total Acceleration
         // Start with global gravity
-        vec2 total_acceleration = simulation_world.gravity_vector;
+        vec2 total_acceleration(simulation_world.gravity_x, simulation_world.gravity_y);
 
-        // Apply per-body viscous damping (proportional to velocity): a_damping = -damping * v
-        if (current_body.damping != 0.0f)
+        // Damping and friction currently not stored per-body in SoA; if legacy bodies exist, read them
+        // Prefer SoA damping/friction if populated; this system reads SoA arrays.
+        if (i < simulation_world.damping.size() && i < simulation_world.friction.size())
         {
-            total_acceleration = total_acceleration - (current_body.velocity * current_body.damping);
-        }
-
-        // Apply simple friction-like damping (approx Coulomb): a_friction = -friction * normalize(v) * |v|
-        if (current_body.friction != 0.0f)
-        {
-            float speed = std::sqrt(current_body.velocity.x * current_body.velocity.x + current_body.velocity.y * current_body.velocity.y);
-            if (speed > 1e-6f)
+            float d = simulation_world.damping[i];
+            float f = simulation_world.friction[i];
+            if (d != 0.0f)
             {
-                vec2 vel_dir = current_body.velocity * (1.0f / speed);
-                total_acceleration = total_acceleration - (vel_dir * (current_body.friction * speed));
+                vec2 vel(simulation_world.vel_x[i], simulation_world.vel_y[i]);
+                total_acceleration = total_acceleration - (vel * d);
+            }
+            if (f != 0.0f)
+            {
+                vec2 vel(simulation_world.vel_x[i], simulation_world.vel_y[i]);
+                float speed = std::sqrt(vel.x * vel.x + vel.y * vel.y);
+                if (speed > 1e-6f)
+                {
+                    vec2 vel_dir = vel * (1.0f / speed);
+                    total_acceleration = total_acceleration - (vel_dir * (f * speed));
+                }
+            }
+        }
+        else
+        {
+            // Fallback: read via getters which check secondary storage if needed
+            float d = simulation_world.get_damping(i);
+            float f = simulation_world.get_friction(i);
+            if (d != 0.0f)
+            {
+                vec2 vel(simulation_world.vel_x[i], simulation_world.vel_y[i]);
+                total_acceleration = total_acceleration - (vel * d);
+            }
+            if (f != 0.0f)
+            {
+                vec2 vel(simulation_world.vel_x[i], simulation_world.vel_y[i]);
+                float speed = std::sqrt(vel.x * vel.x + vel.y * vel.y);
+                if (speed > 1e-6f)
+                {
+                    vec2 vel_dir = vel * (1.0f / speed);
+                    total_acceleration = total_acceleration - (vel_dir * (f * speed));
+                }
             }
         }
 
-        // Save the current position before modifying it (will become the previous position)
-        vec2 current_position = current_body.position;
+        // SoA access
+        vec2 current_position(simulation_world.position_x[i], simulation_world.position_y[i]);
+        vec2 previous_position(simulation_world.previous_position_x[i], simulation_world.previous_position_y[i]);
 
-        // 3. Calculation of the Next Position (Verlet equation)
-
-        // Acceleration term: a * delta_time^2
         vec2 acceleration_term = total_acceleration * delta_time_squared;
+        vec2 next_position = (current_position * 2.0f) - previous_position + acceleration_term;
 
-        // Core Verlet equation:
-        // next_pos = 2 * current_pos - previous_pos + a * delta_time^2
-        vec2 next_position = (current_body.position * 2.0f) - current_body.previous_position + acceleration_term;
+        // Update SoA arrays: shift current -> previous, write next
+        simulation_world.previous_position_x[i] = simulation_world.position_x[i];
+        simulation_world.previous_position_y[i] = simulation_world.position_y[i];
+        simulation_world.position_x[i] = next_position.x;
+        simulation_world.position_y[i] = next_position.y;
 
-        // 4. Update Position for the Next Step
-        current_body.previous_position = current_position; // The old position is the current position
-        current_body.position = next_position;
+        // Update vel SoA using centered difference: (next - prev) / (2*dt)
+        float half_inv_dt = 0.5f * inverse_delta_time;
+        simulation_world.vel_x[i] = (simulation_world.position_x[i] - previous_position.x) * half_inv_dt;
+        simulation_world.vel_y[i] = (simulation_world.position_y[i] - previous_position.y) * half_inv_dt;
 
-        // 5. Explicit Velocity Calculation (Needed for collision detection)
-        // velocity = (current_pos - previous_pos) / delta_time
-        current_body.velocity = (current_body.position - current_body.previous_position) * inverse_delta_time;
+        // Apply damping as exponential decay per second:
+        // combined_damping (1/s) = world.global_damping + per-body damping
+        float per_body_damping = 0.0f;
+        if (i < simulation_world.damping.size())
+            per_body_damping = simulation_world.damping[i];
+        float combined_damping = simulation_world.global_damping + per_body_damping;
+        if (combined_damping > 0.0f)
+        {
+            float damping_factor = std::exp(-combined_damping * delta_time);
+            simulation_world.vel_x[i] *= damping_factor;
+            simulation_world.vel_y[i] *= damping_factor;
+            // Recompute previous_position to remain consistent with damped velocity
+            if (simulation_world.delta_time > 0.0f)
+            {
+                simulation_world.previous_position_x[i] = simulation_world.position_x[i] - simulation_world.vel_x[i] * delta_time;
+                simulation_world.previous_position_y[i] = simulation_world.position_y[i] - simulation_world.vel_y[i] * delta_time;
+            }
+        }
+
+        // SoA arrays are the canonical storage.
     }
 }
 
