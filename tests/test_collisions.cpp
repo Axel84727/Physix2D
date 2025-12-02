@@ -17,7 +17,12 @@ void test_collision_elastic()
     std::vector<body> bodies = {A, B};
 
     // Use a small time step (0.016f)
-    world w(bodies, vec2(0, 0), 0.016f);
+    world w;
+    w.gravity_x = 0.0f;
+    w.gravity_y = 0.0f;
+    w.delta_time = 0.016f;
+    for (auto &b : bodies)
+        w.add_body(b);
 
     collisionSystem cs;
 
@@ -25,7 +30,7 @@ void test_collision_elastic()
     // Expected Result: A.velocity.x = -1, B.velocity.x = 1.
     cs.update(w, w.delta_time);
 
-    std::cout << "Velocity A X: " << w.bodies[0].velocity.x << ", Velocity B X: " << w.bodies[1].velocity.x << "\n";
+    std::cout << "Velocity A X: " << w.vel_x[0] << ", Velocity B X: " << w.vel_x[1] << "\n";
 }
 
 void test_collision_static()
@@ -37,10 +42,15 @@ void test_collision_static()
     body B = create_body(0, 0, 0, 0, 0, 1, 0.8f);
 
     std::vector<body> bodies = {A, B};
-    world w(bodies, vec2(0, 0), 0.016f);
+    world w;
+    w.gravity_x = 0.0f;
+    w.gravity_y = 0.0f;
+    w.delta_time = 0.016f;
+    for (auto &b : bodies)
+        w.add_body(b);
 
     collisionSystem cs;
     cs.update(w, 0.016f);
 
-    std::cout << "Velocity A X: " << w.bodies[0].velocity.x << ", Velocity B X: " << w.bodies[1].velocity.x << "\n";
+    std::cout << "Velocity A X: " << w.vel_x[0] << ", Velocity B X: " << w.vel_x[1] << "\n";
 }
