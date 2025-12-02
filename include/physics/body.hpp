@@ -1,3 +1,5 @@
+
+
 #pragma once
 #include "math/vec2.hpp"
 
@@ -11,12 +13,9 @@ struct body
     float mass;
     float inv_mass;
     float radius;
-    // Linear viscous damping coefficient (per-second)
     float damping = 0.0f;
-    // Simple linear friction coefficient (Coulomb-like scaled), applied as force opposite velocity
     float friction = 0.0f;
     float restitution = 1.0f;
-    // (color removed)
 
     body();
     body(const vec2 &position,
